@@ -6,14 +6,16 @@ import org.junit.Test;
 import org.jmock.Mockery;
 import org.jmock.internal.ExpectationBuilder;
 import org.jmock.Expectations;
+import java.util.*;
 //Could optimize by separating the tests that don't need the same mocking context
 public class DataUtilitiesTestPlus{
 	private Mockery contextValues2D;
 	private Values2D mockValues2D;
 	private Mockery mockingContextKVInput;
-	private Mockery mockingContextKVOutput;
-	private KeyedValues mockKVInput;
+	private Mockery mockingContextKVOutput;	
 	private KeyedValues mockKVOutput;
+	private KeyedValues mockKVInput;
+
 	@Before
 	public void setUpContextKeyedValuesInput(){
 		mockingContextKVInput = new Mockery();
@@ -35,14 +37,33 @@ public class DataUtilitiesTestPlus{
 		 * "KEY 0" -> 1
 		 * "KEY 1" -> NULL
 		 * "KEY 2" -> 2
-		 * "KEY 3" -> 
+		 * "KEY 3" -> 1.0/3.0
 		 */
-		
-
 	}
 	@Before 
 	public void setUpContextKeyedValuesOutput(){
-
+		mockingContextKVOutput = new Mockery();
+		mockKVOutput = mockingContextKVOutput.mock(KeyedValues.class);
+		String[] keys = {"KEY 0","KEY 1","KEY 2","KEY 3"};
+		Number[] expectedOutputs = {new Double(0.3),new Double(0.3),new Double(0.9),new Double(1.0)};
+		mockingContextKVInput.checking(new Expectations(){{
+			allowing(mockKVOutput).getItemCount(); will(returnValue(4));
+			allowing(mockKVOutput).getKeys(); will(returnValue(Arrays.asList(keys)));
+			for(int i = 0; i < 4; i++){
+				allowing(mockKVOutput).getValue(i);
+				will(returnValue(expectedOutputs[i]));
+				allowing(mockKVOutput).getKey(i);
+				will(returnValue(keys[i]));
+			}
+		
+		}});
+		//Expected Key-Value mapping:
+		/*
+		 * "KEY 0" -> 0.3
+		 * "KEY 1" -> 0.3 (b/c NULL)
+		 * "KEY 2" -> 0.9
+		 * "KEY 3" -> 1.0
+		 */
 	}
 	@Before
 	public void setUpContextValues2D(){
@@ -323,7 +344,22 @@ public class DataUtilitiesTestPlus{
 		assertTrue(DataUtilities.equal(testMatrix1,testMatrix2));
 	}
 	@Test
-	public void testKeyedValues(){
-
+	public void testGetCumulativePercentagesReturnsCorrectValues(){
+		String[] keys = {"KEY 0","KEY 1","KEY 2","KEY 3"};
+		try{
+			KeyedValues actual = DataUtilities.getCumulativePercentages(mockKVInput);
+			int expected = mockKVOutput.getItemCount();
+			int actualLength = actual.getItemCount();
+			assertEquals("FAILED: number of key-value pairs does not match",mockKVOutput.getItemCount(),actual.getItemCount(),)
+		}catch(AssertionError ae){
+			System.out.println("FAILED. "+
+			ae.toString());
+			fail();
+		}
+		catch(Exception e){
+			System.out.println("FAILED. Unexpected exception thrown during runtime \""+
+			e.toString()+"\"");
+			fail();
+		}
 	}
 }
