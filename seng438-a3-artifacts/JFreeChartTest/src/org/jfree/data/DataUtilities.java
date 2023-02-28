@@ -61,7 +61,7 @@ public abstract class DataUtilities {
     /**
      * Tests two arrays for equality.  To be considered equal, the arrays must
      * have exactly the same dimensions, and the values in each array must also
-     * match (two values that qre both NaN or both INF are considered equal
+     * match (two values that are both NaN or both INF are considered equal
      * in this test).
      *
      * @param a  the first array (<code>null</code> permitted).

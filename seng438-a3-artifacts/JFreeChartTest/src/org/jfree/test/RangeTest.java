@@ -23,7 +23,7 @@ public class RangeTest {
     }
 
 
-    //this isn't a test we created as it was copied from the Github but it does still test he getCentralValue method
+    //this isn't a test we created as it was copied from the GitHub but it does still test he getCentralValue method
     //getCenterValueTest tests the getCenterValue method which should return the median of the two end points of the range 
     //in the case of Range(-1, 1),  -1 to 1 should be 0
     @Test
@@ -141,16 +141,18 @@ public class RangeTest {
 			
 		//try the toString method
 		try{
-			
 			System.out.print("Testing Range.toString(): "); 
-			assertEquals("Result does not match the expected output:\n", expected, exampleRange.toString());
+			String actual = exampleRange.toString();
+			if(expected.compareTo(actual) != 0){
+				System.out.println("FAIL!! Result does not match the expected output. Expected " + (String)expected + ", but was " + (String)actual);
+				fail();
+			}
 			System.out.print("Test PASSED\n");
-			System.out.println(String.format("Expected \"%s\" and was \"%s\" \n",expected, exampleRange.toString()));
+			System.out.println(
+				String.format("Expected \"%s\" and was \"%s\" \n",expected, exampleRange.toString()));
 		
 		}catch(AssertionError e){		//if the AssertionError is thrown that means the expected value was not returned
-			
 			System.out.print("Test FAILED\n");
-			System.out.println(e.toString() + "\n");
 			fail();
 		
 		}catch(Exception e){	//if an unknown error occurred, print out Test failed, the error, and the expected value

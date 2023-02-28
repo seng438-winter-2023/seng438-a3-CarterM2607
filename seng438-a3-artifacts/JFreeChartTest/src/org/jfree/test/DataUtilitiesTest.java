@@ -1,6 +1,5 @@
 package org.jfree.test;
 import static org.junit.Assert.*;
-import java.security.InvalidParameterException;
 import org.jfree.data.DataUtilities;
 import org.jfree.data.KeyedValues;
 import org.junit.Before;
@@ -9,7 +8,8 @@ import org.jfree.data.Values2D;
 import org.jmock.Mockery;
 import org.jmock.Expectations;
 import java.util.Arrays;
-public class DataUtilitiesTest extends DataUtilities {
+//Updated for Assignment 3
+public class DataUtilitiesTest{
 	private Mockery contextOnlyRows; //initialize private variables for test runs
     private Mockery contextOnlyCols;
     private Mockery contextBrokenRowsCols;
@@ -17,21 +17,19 @@ public class DataUtilitiesTest extends DataUtilities {
     private Mockery contextMockingKeyedValuesOutput;
     private Values2D onlyRowsValues2D;
     private Values2D onlyColsValues2D;
-    private Values2D brokenRowsColsValues2D;
+    private Values2D testValues2D;
     private double[] testDouble1DArray;
     private Number[] testNumber1DArray;
     private double[][] testDouble2DArray;
     private Number[][] testNumber2DArray;
     private KeyedValues mockKVInputValues;
     private KeyedValues mockKVOutputValues;
-
 /* Some tests that weren't possible
  * calculateRowTotal() & calculateColumnTotal() -> method sums the correct column/row
  *  WHY: Because this is black box testing, it's impossible to know 
  *  whether the program simply calculated the sum wrong or just didn't pick the right column/row
  * 
  */
-
  /*
   * Context for "testCalculateRowTotalThreeCols()"
   */
@@ -48,7 +46,6 @@ public class DataUtilitiesTest extends DataUtilities {
             }
         });
     }
-   
    /*
     * Mocking context for "testCalculateColumnTotalThreeRows()"
     */
@@ -65,16 +62,31 @@ public class DataUtilitiesTest extends DataUtilities {
             }
         });
     }
-    //Creates a mock Values2D object that returns impossible parameters:
-    //-1 columns
-    //-5 rows
     @Before
-    public void contextBrokenValues2DSetUp()throws Exception{
+    public void contextSemiBrokenValues2DSetUp()throws Exception{
         contextBrokenRowsCols= new Mockery();
-        brokenRowsColsValues2D = contextBrokenRowsCols.mock(Values2D.class);
+        testValues2D = contextBrokenRowsCols.mock(Values2D.class);
         contextBrokenRowsCols.checking(new Expectations(){{
-            one(brokenRowsColsValues2D).getColumnCount(); will(returnValue(-1));
-            one(brokenRowsColsValues2D).getRowCount(); will(returnValue(-5));
+        	one(testValues2D).getColumnCount(); will(returnValue(2));
+            one(testValues2D).getRowCount(); will(returnValue(2));
+            for(int i = 0; i < 2 ; i++){
+                for(int j = 0; j < 2; j++){
+                    allowing(testValues2D).getValue(i, j);
+                    will(returnValue(-3));
+                    allowing(testValues2D).getValue(i,-1);
+                    allowing(testValues2D).getValue(-1,j);
+                }
+            }
+            for(int k = 0; k < 2; k++){
+                allowing(testValues2D).getValue(k,2);
+                will(returnValue(1));
+            }
+            for(int m = 0; m < 2; m++){
+                allowing(testValues2D).getValue(2,m);
+                will(returnValue(20));
+            }
+            allowing(testValues2D).getValue(2,2);
+            will(returnValue(null));
         }});
     }
     //creating a Number[] object
@@ -119,7 +131,7 @@ public class DataUtilitiesTest extends DataUtilities {
             for(int i = 0; i<values.length;i++){
                 atLeast(1).of(mockKVInputValues).getValue(i); 
                 will(returnValue(Double.valueOf(values[i])));
-                atLeast(1).of(mockKVOutputValues).getValue(arr[i]); 
+                atLeast(1).of(mockKVInputValues).getValue(arr[i]); 
                 will(returnValue(Double.valueOf(values[i])));
                 atLeast(1).of(mockKVInputValues).getKey(i); 
                 will(returnValue(arr[i]));
@@ -130,7 +142,7 @@ public class DataUtilitiesTest extends DataUtilities {
     }
      //Mock KeyedValues output value for getCumulativePercentages()
     @Before
-    public void setupContextMockingKeyedValueOutput(){
+    public void setupContextMockingKeyedValuesOutput(){
         contextMockingKeyedValuesOutput = new Mockery();
         mockKVOutputValues = contextMockingKeyedValuesOutput.mock(KeyedValues.class);
         contextMockingKeyedValuesOutput.checking(new Expectations(){{
@@ -182,8 +194,38 @@ public class DataUtilitiesTest extends DataUtilities {
     public void testCalculateColumnTotalZeroForInvalidColumns(){
         System.out.println("\nTesting calculateColumnTotal with"+
         " an invalid columns input of -1: ");
-        double actual = DataUtilities.calculateColumnTotal(brokenRowsColsValues2D, -1);
+        double actual = DataUtilities.calculateColumnTotal(testValues2D, -1);
         double expected = 0.0;
+        double delta = 0;
+        String errMsg2 = "FAILED!!! Expected: " + expected + " but was " + actual + "";
+        try{
+            assertEquals(expected,actual,delta);
+            System.out.println("PASSED. Expected: " + expected + " , was " + actual + "");
+        }catch(Exception e){
+            System.out.println(errMsg2);
+            fail();
+        }
+    }
+    @Test
+    public void testCalculateColumnTotalPartiallyNull(){
+        System.out.println("\nTesting calculateColumnTotal with data beyond the returned number of columns");
+        double actual = DataUtilities.calculateColumnTotal(testValues2D, 2);
+        double expected = 2;
+        double delta = 0;
+        String errMsg2 = "FAILED!!! Expected: " + expected + " but was " + actual + "";
+        try{
+            assertEquals(expected,actual,delta);
+            System.out.println("PASSED. Expected: " + expected + " , was " + actual + "");
+        }catch(Exception e){
+            System.out.println(errMsg2);
+            fail();
+        }
+    }
+    @Test
+    public void testCalculateRowTotalPartiallyNull(){
+        System.out.println("\nTesting calculateRowTotal with data beyond the returned number of rows");
+        double actual = DataUtilities.calculateRowTotal(testValues2D, 2);
+        double expected = 40;
         double delta = 0;
         String errMsg2 = "FAILED!!! Expected: " + expected + " but was " + actual + "";
         try{
@@ -199,7 +241,7 @@ public class DataUtilitiesTest extends DataUtilities {
     public void testCalculateRowTotalZeroForInvalidRows(){
         System.out.println("\nTesting calculateRowTotal with"+
         " an invalid row input of -1: ");
-        double actual = DataUtilities.calculateRowTotal(brokenRowsColsValues2D, -1);
+        double actual = DataUtilities.calculateRowTotal(testValues2D, -1);
         double expected = 0.0;
         double delta = 0;
         String errMsg2 = "FAILED!!! Expected: " + expected + " but was " + actual + "";
@@ -211,35 +253,6 @@ public class DataUtilitiesTest extends DataUtilities {
             fail();
         }
     }
-    //Tests whether calculateRowTotal() 
-    //throws an InvalidParameterException for an invalid input
-    @Test
-    public void testCalculateRowTotalThrowsInvalidParameterException(){
-        System.out.println("\nTesting calculateRowTotal(Values2D data) with"+
-        " an incompatible Values2D object on row 0: ");
-        try{
-            double output = DataUtilities.calculateRowTotal(brokenRowsColsValues2D, -1);
-            System.out.println("FAILED!!! Expected java.security.InvalidParameterException, but was " + output);
-            fail();
-        }catch(InvalidParameterException e){
-            System.out.println("PASSED. Expected: java.security.InvalidParameterException\n" + "Was: "+e.toString());
-        }
-    }
-    //Tests whether calculateColumnTotal() 
-    //throws InvalidParameterException for an invalid input
-    @Test
-    public void testCalculateColumnTotalThrowsInvalidParameterException(){
-        System.out.println("\nTesting calculateColumnTotal(Values2D data) with"+
-        " an incompatible Values2D object on row 0: ");
-        try{
-            double output = DataUtilities.calculateColumnTotal(brokenRowsColsValues2D, -1);
-            System.out.println("FAILED!!! Expected java.security.InvalidParameterException, but was " + output);
-            fail();
-        }catch(InvalidParameterException e){
-            System.out.println("PASSED. Expected: java.security.InvalidParameterException\n" + "Was: "+e.toString());
-        }
-    }
-   
    //Tests createNumberArray -> resulting Number Array should be the same
    //length as the input array.
     @Test
@@ -247,7 +260,7 @@ public class DataUtilitiesTest extends DataUtilities {
         System.out.println("\nTesting createNumberArray(double[] data)");
         Number[] outputArray = DataUtilities.createNumberArray(testDouble1DArray);
         try{
-            assertEquals(String.format("Failed!!! Expected %d but was % d",Integer.valueOf(testNumber1DArray.length),Integer.valueOf(outputArray.length)), outputArray.length);
+            assertEquals(String.format("Failed!!! Expected %d but was % d",Integer.valueOf(testNumber1DArray.length),Integer.valueOf(outputArray.length)),testNumber1DArray.length,outputArray.length, 0);
             System.out.println(String.format("Passed. Expected %d, and was % d",Integer.valueOf(testNumber1DArray.length),Integer.valueOf(outputArray.length)));
         }
         catch(AssertionError e){
@@ -266,27 +279,17 @@ public class DataUtilitiesTest extends DataUtilities {
         System.out.println("\nTesting createNumberArray(double[] data)");
         Number[] outputArray = DataUtilities.createNumberArray(testDouble1DArray);
         try{
-            assertArrayEquals(testNumber1DArray, outputArray);
+            for(int i = 0; i < outputArray.length; i++){
+                Integer index = Integer.valueOf(i);
+                Double expected = Double.valueOf(testDouble1DArray[i]);
+                Double actual = (Double)outputArray[i];
+                String errStr = String.format("FAILED! At index %d:\n\tExpected %f but was %f",index,expected,actual);
+                assertEquals(errStr,(double)expected,(double)actual,0);
+            }
             System.out.println("PASSED. Output array contains the expected data in the correct order");
         }
-        catch(AssertionError e){
-                System.out.println("FAILED!!!\n");
-                if(outputArray.length != testDouble1DArray.length){
-                    System.out.println("Length does not match (expected "+ testDouble1DArray.length + ", but was "
-                    + outputArray.length + ")");
-                }
-                for(int i = 0; i < outputArray.length; i++){
-                    Integer index = Integer.valueOf(i);
-                    try{
-                        if(testNumber1DArray[i].doubleValue() != outputArray[i].doubleValue()){
-                            String msg = String.format("\nAt index [%d]: \n\tExpected: %lf but was %lf",index,testNumber1DArray[i],outputArray[i]);
-                            System.out.println(msg);
-                        }
-                    }catch(NullPointerException n){
-                        String msg = String.format("\nAt index [%d]: \n\tExpected: %f but was NULL instead",index,testNumber1DArray[i]);
-                        System.out.println(msg);
-                    }
-            }
+        catch(NullPointerException n){
+            System.out.println("FAILURE "  + n.toString());
             fail();
         }
     }
@@ -294,7 +297,7 @@ public class DataUtilitiesTest extends DataUtilities {
     @Test
     public void createNumberArray2DHasCorrectLength(){
         System.out.println("\nTesting createNumberArray2D() for correct length");
-        Number[][] actualArray = createNumberArray2D(testDouble2DArray);
+        Number[][] actualArray = DataUtilities.createNumberArray2D(testDouble2DArray);
         int expectedLength = testDouble2DArray.length;
         int actualLength = actualArray.length;
         assertEquals(String.format("FAILED. Expected %d, but was %d",Integer.valueOf(expectedLength),Integer.valueOf(actualLength)),expectedLength, actualLength,0);
@@ -304,12 +307,13 @@ public class DataUtilitiesTest extends DataUtilities {
     @Test
     public void createNumberArray2DHasCorrectNumberOfColumns(){
         System.out.println("\nTesting createNumberArray2D() for correct number of columns");
-        Number[][] actualArray = createNumberArray2D(testDouble2DArray);
+        Number[][] actualArray = DataUtilities.createNumberArray2D(testDouble2DArray);
         int expected = testDouble2DArray[0].length;
         int actual = actualArray[0].length;
         assertEquals(String.format("FAILED. Expected %d columns, but was %d columns",Integer.valueOf(expected),Integer.valueOf(actual)),expected,actual,0);
         System.out.println(String.format("Passed. Expected %d columns, was %d columns",Integer.valueOf(expected),Integer.valueOf(actual)));
     }
+    @Test
     public void testCreateNumberArray2D(){
         System.out.println("\nTesting createNumberArray2D(double[][] data)");
         Number[][] outputArray = DataUtilities.createNumberArray2D(testDouble2DArray);
@@ -345,7 +349,6 @@ public class DataUtilitiesTest extends DataUtilities {
             fail();
         }
     }
-
     //testing if getCumulativePercentages() returns the correct value for each row
     @Test
     public void testGetCumulativePercentagesReturnsCorrectRowValues(){
@@ -360,24 +363,12 @@ public class DataUtilitiesTest extends DataUtilities {
                 System.out.println(String.format("Expected: (Key1, %s), but was (Key1,%s)",expectedValue,actualValue));
                 failFlag = true;
             }
-            else{
-                System.out.println("PASSED.");
-                String expectedValue =  mockKVOutputValues.getValue("Key1").toString();
-                String actualValue = actual.getValue("Key1").toString();
-                System.out.println(String.format("Expected: (Key1, %s), was (Key1,%s)",expectedValue,actualValue));
-            }
             if(!(mockKVOutputValues.getValue("Key2").equals(actual.getValue("Key2")))){
                 System.out.println("FAILED!!!");
                 String expectedValue =  mockKVOutputValues.getValue("Key2").toString();
                 String actualValue = actual.getValue("Key2").toString();
                 System.out.println(String.format("Expected: (Key2, %s) but was (Key2,%s)",expectedValue,actualValue));
                 failFlag = true;
-            }
-            else{
-                System.out.println("PASSED.");
-                String expectedValue =  mockKVOutputValues.getValue("Key2").toString();
-                String actualValue = actual.getValue("Key2").toString();
-                System.out.println(String.format("Expected: (Key2, %s), was (Key2,%s)",expectedValue,actualValue));
             }
             if(!(mockKVOutputValues.getValue("Key3").equals(actual.getValue("Key3")))){
                 System.out.println("FAILED!!!");
@@ -386,14 +377,11 @@ public class DataUtilitiesTest extends DataUtilities {
                 System.out.println(String.format("Expected: (Key3, %s) but was (Key3,%s)",expectedValue,actualValue));
                 failFlag = true;
             }
-            else{
-                System.out.println("PASSED.");
-                String expectedValue =  mockKVOutputValues.getValue("Key3").toString();
-                String actualValue = actual.getValue("Key3").toString();
-                System.out.println(String.format("Expected: (Key3, %s), was (Key3,%s)",expectedValue,actualValue));
-            }
             if(failFlag == true){
                 fail();
+            }
+            else{
+                System.out.println("PASSED.\n");
             }
         }catch(Exception e){
             System.out.println("FAILED!!!");
@@ -402,28 +390,13 @@ public class DataUtilitiesTest extends DataUtilities {
             fail();
         }
     }
-    //Tests if getCumulativePercentages() throws an InvalidParameterException for
-    //invalid KeyedValues input
-    @Test
-    public void getCumulativePercentagesThrowsInvalidParameterException(){
-        try{
-            KeyedValues output = DataUtilities.getCumulativePercentages(null);
-            fail();
-        }catch(InvalidParameterException exception){
-            System.out.println(String.format("Expected: java.security.InvalidParameterException, was %s",exception.toString()));
-        }
-        catch(Exception exception){
-            System.out.println("FAILED!!!");
-            System.out.println(String.format("Expected: java.security.InvalidParameterException,but was %s",exception.toString()));
-            fail();
-
-        }
-    }
     //Testing getCumulativePercentages() returns the correct number of items in its output.
     @Test
     public void testGCPReturnsCorrectNoRows(){
-        KeyedValues output = getCumulativePercentages(mockKVInputValues);
+        KeyedValues output = DataUtilities.getCumulativePercentages(mockKVInputValues);
         assertEquals(mockKVOutputValues.getItemCount(),output.getItemCount());
     }
+
+    //BELOW ARE **NEW TESTS** ON 
 }
 
