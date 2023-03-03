@@ -1,11 +1,11 @@
 **Lab. Report #3 – Code Coverage, Adequacy Criteria and Test Case Correlation**
 
-| Group \#:      |  16 |
+| Group \#:      | 16    |
 | -------------- | --- |
-| Student Names: |  Carter Marcelo	|
-		 |  Karim Mansour	|
-		 |  Ethan Winters	|
-		 |  Jason Pang		|
+| Student Names: | Carter Marcelo    |
+|                | Karim Mansour    |
+|                | Ethan Winters    |
+|                | Jason Pang    |
 
 (Note that some labs require individual reports while others require one report
 for each group. Please see each lab document for details.)
