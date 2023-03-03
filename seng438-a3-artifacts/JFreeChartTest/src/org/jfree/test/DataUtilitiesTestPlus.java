@@ -4,7 +4,6 @@ import org.jfree.data.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.jmock.Mockery;
-import org.jmock.internal.ExpectationBuilder;
 import org.jmock.Expectations;
 import java.util.*;
 //Could optimize by separating the tests that don't need the same mocking context
@@ -46,7 +45,7 @@ public class DataUtilitiesTestPlus{
 		mockKVOutput = mockingContextKVOutput.mock(KeyedValues.class);
 		String[] keys = {"KEY 0","KEY 1","KEY 2","KEY 3"};
 		Number[] expectedOutputs = {new Double(0.3),new Double(0.3),new Double(0.9),new Double(1.0)};
-		mockingContextKVInput.checking(new Expectations(){{
+		mockingContextKVOutput.checking(new Expectations(){{
 			allowing(mockKVOutput).getItemCount(); will(returnValue(4));
 			allowing(mockKVOutput).getKeys(); will(returnValue(Arrays.asList(keys)));
 			for(int i = 0; i < 4; i++){
@@ -55,7 +54,6 @@ public class DataUtilitiesTestPlus{
 				allowing(mockKVOutput).getKey(i);
 				will(returnValue(keys[i]));
 			}
-		
 		}});
 		//Expected Key-Value mapping:
 		/*
@@ -94,6 +92,15 @@ public class DataUtilitiesTestPlus{
 				allowing(mockValues2D).getValue(4,p);
 				will(returnValue(null));
 			}
+			for(int m = 0; m < 5; m++){
+				allowing(mockValues2D).getValue(-1,m);
+				will(returnValue(null));
+				
+			}
+			for(int n = 0; n< 5; n++){
+				allowing(mockValues2D).getValue(n,-1);
+				will(returnValue(null));
+			}
 		}});
 		/* 
 			The Values2D object should look like:
@@ -109,9 +116,26 @@ public class DataUtilitiesTestPlus{
 	}
 	@Test
 	public void testCalculateColumnTotalTwoArguments(){
-		double expected = 3 + 1/3;
+		double expected = (double)10/(double)3;
 		double actual = DataUtilities.calculateColumnTotal(mockValues2D, 1);
-		assertEquals("FAILED: Sum does not match (expected " + expected + ", but was "+actual+")",expected,actual,0);
+		assertEquals("FAILED: Sum does not match (expected " + expected + ", but was "+actual+")",expected,actual,0.000000000001);
+	}
+	@Test
+	public void testCalculateColumnTotalTwoArgsProhibitsNullInput(){
+		try{
+			DataUtilities.calculateColumnTotal(null, 1);
+			fail();
+		}catch(AssertionError ae){
+			fail("FAILED!! No action taken on null input.");
+		}catch(Exception e){
+			System.out.println("PASSED. Method threw exception: "+e.toString());
+		}
+	}
+	@Test
+	public void testCalculateColumnTotalTwoArgsIsZeroForNegativeInput(){
+		double expected = 0;
+		double actual = DataUtilities.calculateColumnTotal(mockValues2D, -1);
+		assertEquals("FAILED: Sum does not match (expected " + expected + ", but was "+actual+")",expected,actual,0.000000000001);
 	}
 	@Test
 	public void testCalculateColumnTotalThreeArgs(){
@@ -130,16 +154,95 @@ public class DataUtilitiesTestPlus{
 			fail();
 		}
 	} 
+	@Test
+	public void testCalculateColumnTotalThreeArgsProhibitsNullInput(){
+		int rows[] = {1,2,4};
+		try{
+			DataUtilities.calculateColumnTotal(null, 1,rows);
+			fail();
+		}catch(AssertionError ae){
+			fail("FAILED!! No action taken on null input.");
+		}
+		catch(Exception e){
+			System.out.println("PASSED. Method threw an exception for null input: "+e.toString());
+		}
+	} 
+	@Test
+	public void testCalculateColumnTotalThreeArgsSkipsInvalidRows(){
+		double expected = (double)1 + (double)1/(double)3;
+		int rows[] = {1,2,4,-1,12,69};
+		try{
+			double actual = DataUtilities.calculateColumnTotal(mockValues2D, 1,rows);
+			assertEquals("FAILED: Sum does not match",expected,actual,0);
+			System.out.println(String.format("PASSED: Expected %f, was %f.",Double.valueOf(expected),Double.valueOf(actual)));
+		}catch(AssertionError ae){
+			fail();
+		}
+		catch(Exception e){
+			System.out.println("PASSED. Method threw exception for null input: "+e.toString());
+			fail();
+		}
+	}
+	@Test
+	public void testCalculateColumnTotalThreeArgsZeroForNegativeColumnInput(){
+		double expected = 0;
+		int rows[] = {1,2,4};
+		try{
+			double actual = DataUtilities.calculateColumnTotal(mockValues2D, -1,rows);
+			assertEquals("FAILED: Sum does not match",expected,actual,0);
+			System.out.println(String.format("PASSED: Expected %f, was %f.",Double.valueOf(expected),Double.valueOf(actual)));
+		}catch(AssertionError ae){
+			System.out.println(ae.toString());
+			fail();
+		}
+		catch(Exception e){
+			System.out.println("FAILED: Unexpected exception thrown \""+e.toString()+"\"");
+			fail();
+		}
+	} 
 	@Test 
 	public void testCalculateRowTotalTwoArguments(){
 		double expected = -8;
 		double actual = DataUtilities.calculateRowTotal(mockValues2D, 0);
 		assertEquals("FAILED: Sum does not match (expected -8, but was "+actual+")",expected,actual,0);
 	}
+	@Test 
+	public void testCalculateRowTotalTwoArgumentsNegativeRowNumber(){
+		double expected = 0.0;
+		try{
+			double actual = DataUtilities.calculateRowTotal(mockValues2D, -1);
+			assertEquals("FAILED: row sum does not match",expected,actual,0);
+			System.out.println(String.format("PASSED: Expected %f, was %f.",Double.valueOf(expected),Double.valueOf(actual)));
+		}catch(AssertionError ae){
+			System.out.println(ae.toString());
+			fail();
+		}
+		catch(Exception e){
+			System.out.println("FAILED: Unexpected exception thrown \""+e.toString()+"\"");
+			fail();
+		}
+	}
 	@Test
 	public void testCalculateRowTotalThreeArgs(){
 		double expected = -9;
 		int cols[] = {2,3,4};
+		try{
+			double actual = DataUtilities.calculateRowTotal(mockValues2D, 0,cols);
+			assertEquals("FAILED: Sum does not match (expected " + expected + " but was "+actual+")",expected,actual,0);
+			System.out.println(String.format("PASSED: Expected %f, was %f.",Double.valueOf(expected),Double.valueOf(actual)));
+		}catch(AssertionError ae){
+			System.out.println(ae.toString());
+			fail();
+		}
+		catch(Exception e){
+			System.out.println("FAILED: Unexpected exception thrown \""+e.toString()+"\"");
+			fail();
+		}
+	}
+	@Test
+	public void testCalculateRowTotalThreeArgsHandlesBadValues(){
+		double expected = -9;
+		int cols[] = {2,3,4,-1,12};
 		try{
 			double actual = DataUtilities.calculateRowTotal(mockValues2D, 0,cols);
 			assertEquals("FAILED: Sum does not match (expected " + expected + " but was "+actual+")",expected,actual,0);
@@ -344,16 +447,55 @@ public class DataUtilitiesTestPlus{
 		assertTrue(DataUtilities.equal(testMatrix1,testMatrix2));
 	}
 	@Test
-	public void testGetCumulativePercentagesReturnsCorrectValues(){
-		String[] keys = {"KEY 0","KEY 1","KEY 2","KEY 3"};
+	public void testGetCumulativePercentagesHasCorrectNumberOfValues(){
 		try{
 			KeyedValues actual = DataUtilities.getCumulativePercentages(mockKVInput);
 			int expected = mockKVOutput.getItemCount();
 			int actualLength = actual.getItemCount();
-			assertEquals("FAILED: number of key-value pairs does not match",mockKVOutput.getItemCount(),actual.getItemCount(),)
+			assertEquals("FAILED: number of key-value pairs does not match",expected,actualLength,0);
 		}catch(AssertionError ae){
-			System.out.println("FAILED. "+
-			ae.toString());
+			System.out.println("FAILED. "+ ae.toString());
+			fail();
+		}
+		catch(Exception e){
+			System.out.println("FAILED. Unexpected exception thrown during runtime \""+
+			e.toString()+"\"");
+			fail();
+		}
+	}
+	@Test
+	public void testGetCumulativePercentagesReturnsCorrectKeys(){
+		//This ONLY tests whether the values match expected values for the specified keys
+		//It is unlikely, but still possible
+		String[] keys = {"KEY 0","KEY 1","KEY 2","KEY 3"};
+		try{
+			KeyedValues actual = DataUtilities.getCumulativePercentages(mockKVInput);
+			Object actualKeys[] = actual.getKeys().toArray();
+			assertArrayEquals("Mismatch between keys", keys, actualKeys);
+			System.out.println("PASSED");
+		}catch(AssertionError ae){
+			System.out.println("FAILED. "+ ae.toString());
+			fail();
+		}
+		catch(Exception e){
+			System.out.println("FAILED. Unexpected exception thrown during runtime \""+
+			e.toString()+"\"");
+			fail();
+		}
+	}
+	@Test
+	public void testGetCumulativePercentagesReturnsCorrectValues(){
+		//This ONLY tests whether the values match expected values for the specified keys
+		//It is unlikely, but still possible
+		try{
+			KeyedValues actual = DataUtilities.getCumulativePercentages(mockKVInput);
+			for(int i = 0; i < mockKVOutput.getItemCount(); i++){
+				Number expectedValue = mockKVOutput.getValue(i).doubleValue();
+				Number actualValue = actual.getValue(i).doubleValue();
+				assertEquals("FAILED: Values do not match at row " + i,expectedValue.doubleValue(),actualValue.doubleValue(),0.000000000001);
+			}
+		}catch(AssertionError ae){
+			System.out.println("FAILED. "+ ae.toString());
 			fail();
 		}
 		catch(Exception e){
